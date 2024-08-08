@@ -5,6 +5,55 @@ every ai dev needs a DONNA, to stepout once in a while and get some sunshine and
 ## Now with testing on the fly
 ![image](https://github.com/user-attachments/assets/7e944a19-5a8f-4b4f-aa72-dcd76b43c03a) ![image](https://github.com/user-attachments/assets/d43e9de4-e6bf-411d-a497-326ca12bf55d)
 
+## Project Workflow
 
+1. **User Credentials and Setup**
+   - **Telegram Integration**: User provides Telegram credentials, bot ID, and chat ID.
+   - **Dataloader Option**: Query if the developer has a dataloader or needs to create one on-the-fly. Choices:
+     - Use an existing dataloader.
+     - Create an on-the-fly dataloader with predefined or dynamically generated labels.
+     - Utilize a pre-built package.
 
+2. **Seed Management**
+   - **Seed Selection**: Prompt for changing the seed with existing comparisons or using the same seed for reproducibility.
 
+3. **Training Process**
+   - **Checkpoints**: Determine whether to use existing checkpoints or start training from scratch.
+   - **Training Start**: Display a message indicating that training has begun.
+   - **CUDA Information**: Once training is complete, display CUDA information.
+
+4. **Post-Training Actions**
+   - **User Choices**: Provide options to retrain, stop, or upload files to GitHub.
+   - **GitHub Upload**:
+     - Verify local authentication.
+     - Ask for repository creation or check for existing repositories.
+     - Push all possible files and display their names.
+   - **Final Steps**: Prompt to rerun the process or stop.
+
+## Getting Started
+
+Instructions to get a copy of the project up and running on your local machine.
+
+### Prerequisites
+
+List of software and tools required.
+
+### Installation
+
+Step-by-step guide on how to set up the project.
+
+## Usage
+
+How to use the project once it's set up.
+
+## Contributing
+
+Guidelines for contributing to the project.
+
+## License
+
+Information about the project's license.
+
+## Acknowledgments
+
+Credits to those who contributed or helped with the project.
