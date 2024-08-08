@@ -10,7 +10,7 @@ every ai dev needs a DONNA, to stepout once in a while and get some sunshine and
 1. **User Credentials and Setup**
    - **Telegram Integration**: User provides Telegram credentials, bot ID, and chat ID.
    - **Dataloader Option**: Query if the developer has a dataloader or needs to create one on-the-fly. Choices:
-     - Use an existing dataloader.
+     - Use an existing dataloader (if user has predefined path).
      - Create an on-the-fly dataloader with predefined or dynamically generated labels.
      - Utilize a pre-built package.
 
@@ -19,14 +19,12 @@ every ai dev needs a DONNA, to stepout once in a while and get some sunshine and
 
 3. **Training Process**
    - **Checkpoints**: Determine whether to use existing checkpoints or start training from scratch.
-   - **Training Start**: Display a message indicating that training has begun.
-   - **CUDA Information**: Once training is complete, display CUDA information.
-
-4. **Post-Training Actions**
-   - **User Choices**: Provide options to retrain, stop, or upload files to GitHub.
+   - **Hyperparameters**: Ask the user if they want to use custom hyper parameters or current, with current being displayed. (scalable)
+   - **Training Start**: Display a message indicating that training has begun. Display the training plots (scalable). 
+   - **User Choices**: Provide options to retrain, stop, or upload files to GitHub, or display cuda information.
    - **GitHub Upload**:
-     - Verify local authentication.
-     - Ask for repository creation or check for existing repositories.
-     - Push all possible files and display their names.
+     - pre-verified local authentication should be done.
+     - Ask for repository creation or check for existing repositories by asking the repo name.
+     - Push all possible files and folders, display their names.
    - **Final Steps**: Prompt to rerun the process or stop.
 
