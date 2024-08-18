@@ -1,0 +1,6 @@
+torch
+torchvision
+Pillow
+requests
+gitpython
+matplotlib
