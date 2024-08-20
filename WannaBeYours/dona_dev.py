@@ -182,20 +182,121 @@ class DonaDev:
                         f"Hyperparameters: {log['hyperparameters']}\n")
         self.send_telegram_message(message)
 
+    # def main_loop(self):
+    #     self.clear_previous_messages()
+    #     while True:
+    #         dataset_choice = self.request_user_input("Do you want to use package-based data or custom data? (package/custom)")
+    #         if dataset_choice == "stop":
+    #             self.send_telegram_message("Process stopped by user command.")
+    #             break
+    #         while dataset_choice not in ["package", "custom"]:
+    #             self.send_telegram_message("Invalid choice. Please enter 'package' or 'custom'.")
+    #             dataset_choice = self.request_user_input("Do you want to use package-based data or custom data? (package/custom)")
+    #             if dataset_choice == "stop":
+    #                 self.send_telegram_message("Process stopped by user command.")
+    #                 break
+
+    #         if dataset_choice == "package":
+    #             dataset_type = self.request_user_input("Choose a dataset (mnist/cifar10):")
+    #             while dataset_type not in ["mnist", "cifar10"]:
+    #                 self.send_telegram_message("Invalid dataset choice. Please choose 'mnist' or 'cifar10'.")
+    #                 dataset_type = self.request_user_input("Choose a dataset (mnist/cifar10):")
+    #                 if dataset_type == "stop":
+    #                     self.send_telegram_message("Process stopped by user command.")
+    #                     break
+    #             if dataset_type == "stop":
+    #                 break
+    #             next_action = "train"  # Proceed to training after valid dataset choice
+    #         else:
+    #             dataset_type = "custom"
+    #             self.collect_data()
+    #             next_action = self.request_user_input("Data collection complete. Do you want to train or stop? (train/stop)")
+    #             while next_action not in ["train", "stop"]:
+    #                 self.send_telegram_message("Invalid choice. Please enter 'train' or 'stop'.")
+    #                 next_action = self.request_user_input("Data collection complete. Do you want to train or stop? (train/stop)")
+    #             if next_action == "stop":
+    #                 self.send_telegram_message("Process stopped by user command.")
+    #                 break
+
+    #         if next_action == "train":
+    #             self.show_random_seed_logs()
+    #             seed_choice = self.request_user_input("Do you want to set a custom random seed? (yes/no)")
+    #             if seed_choice == "yes":
+    #                 random_seed = int(self.request_user_input("Enter the random seed value:"))
+    #                 self.ai_dev.set_random_seed(random_seed)
+    #             self.get_hyperparameters(dataset_type)
+    #             self.ai_dev.modelinit(dataset_type, self.data_dir if dataset_type == "custom" else None)
+    #             self.send_telegram_message("Model training has started.")
+    #             epoch_losses = self.ai_dev.train()
+    #             final_loss = epoch_losses[-1]
+    #             hyperparameters = {
+    #                 "learning_rate": self.ai_dev.learning_rate,
+    #                 "batch_size": self.ai_dev.batch_size,
+    #                 "num_epochs": self.ai_dev.num_epochs,
+    #                 "hidden_size": self.ai_dev.hidden_size,
+    #                 "image_size": self.ai_dev.image_size,
+    #                 "input_channels": self.ai_dev.input_channels
+    #             }
+    #             self.ai_dev.save_log(hyperparameters, final_loss, self.ai_dev.random_seed)
+    #             self.send_telegram_message(f"Training complete. Final loss: {final_loss:.4f}")
+    #             self.ai_dev.plot_losses(epoch_losses)
+    #             self.send_telegram_image('training_loss_plot.png')
+
+    #             use_github = self.request_user_input("Do you want to use GitHub? (yes/no)")
+    #             while use_github not in ["yes", "no"]:
+    #                 self.send_telegram_message("Invalid choice. Please enter 'yes' or 'no'.")
+    #                 use_github = self.request_user_input("Do you want to use GitHub? (yes/no)")
+    #             if use_github == 'yes':
+    #                 acceptable_files = self.check_file_sizes()
+    #                 self.send_telegram_message(f"Files acceptable for GitHub push: {', '.join(acceptable_files)}")
+    #                 push_decision = self.request_user_input("Do you want to push these files to GitHub? (yes/no)")
+    #                 while push_decision not in ["yes", "no"]:
+    #                     self.send_telegram_message("Invalid choice. Please enter 'yes' or 'no'.")
+    #                     push_decision = self.request_user_input("Do you want to push these files to GitHub? (yes/no)")
+    #                 if push_decision == 'yes':
+    #                     repo_url = self.request_user_input("Enter your GitHub repository URL:")
+    #                     is_private = self.request_user_input("Is this a private repository? (yes/no)") == 'yes'
+    #                     self.push_to_github(repo_url, is_private)
+
+    #             while True:
+    #                 command = self.request_user_input("Enter 'rerun' to train again with new parameters, or 'stop' to end the program, 'cuda' to get CUDA status and stop, or an image to test model:")
+    #                 if isinstance(command, bytes):
+    #                     self.ai_dev.test(command)
+    #                 else:               
+    #                     if command not in ["rerun", "stop", "cuda"]:
+    #                         self.send_telegram_message("Invalid choice. Please enter 'rerun', 'stop', 'cuda', or send image.")
+    #                     if command == "stop":
+    #                         self.send_telegram_message("Training stopped by user command.")
+    #                         break
+    #                     elif command == "rerun":
+    #                         self.send_telegram_message("Rerunning the training with new parameters.")
+    #                         continue
+    #                     elif command == "cuda":
+    #                         self.get_cuda_options()
+
     def main_loop(self):
         self.clear_previous_messages()
-        while True:
+        
+        # Ask if the user wants to use an on-the-fly dataloader
+        use_onthefly_dataloader = self.request_user_input("Do you want to use an on-the-fly dataloader? (yes/no)")
+        
+        if use_onthefly_dataloader == "stop":
+            self.send_telegram_message("Process stopped by user command.")
+            return
+        
+        if use_onthefly_dataloader == "yes":
             dataset_choice = self.request_user_input("Do you want to use package-based data or custom data? (package/custom)")
             if dataset_choice == "stop":
                 self.send_telegram_message("Process stopped by user command.")
-                break
+                return
+            
             while dataset_choice not in ["package", "custom"]:
                 self.send_telegram_message("Invalid choice. Please enter 'package' or 'custom'.")
                 dataset_choice = self.request_user_input("Do you want to use package-based data or custom data? (package/custom)")
                 if dataset_choice == "stop":
                     self.send_telegram_message("Process stopped by user command.")
-                    break
-
+                    return
+    
             if dataset_choice == "package":
                 dataset_type = self.request_user_input("Choose a dataset (mnist/cifar10):")
                 while dataset_type not in ["mnist", "cifar10"]:
@@ -203,9 +304,7 @@ class DonaDev:
                     dataset_type = self.request_user_input("Choose a dataset (mnist/cifar10):")
                     if dataset_type == "stop":
                         self.send_telegram_message("Process stopped by user command.")
-                        break
-                if dataset_type == "stop":
-                    break
+                        return
                 next_action = "train"  # Proceed to training after valid dataset choice
             else:
                 dataset_type = "custom"
@@ -216,61 +315,69 @@ class DonaDev:
                     next_action = self.request_user_input("Data collection complete. Do you want to train or stop? (train/stop)")
                 if next_action == "stop":
                     self.send_telegram_message("Process stopped by user command.")
-                    break
-
-            if next_action == "train":
-                self.show_random_seed_logs()
-                seed_choice = self.request_user_input("Do you want to set a custom random seed? (yes/no)")
-                if seed_choice == "yes":
-                    random_seed = int(self.request_user_input("Enter the random seed value:"))
-                    self.ai_dev.set_random_seed(random_seed)
-                self.get_hyperparameters(dataset_type)
-                self.ai_dev.modelinit(dataset_type, self.data_dir if dataset_type == "custom" else None)
-                self.send_telegram_message("Model training has started.")
-                epoch_losses = self.ai_dev.train()
-                final_loss = epoch_losses[-1]
-                hyperparameters = {
-                    "learning_rate": self.ai_dev.learning_rate,
-                    "batch_size": self.ai_dev.batch_size,
-                    "num_epochs": self.ai_dev.num_epochs,
-                    "hidden_size": self.ai_dev.hidden_size,
-                    "image_size": self.ai_dev.image_size,
-                    "input_channels": self.ai_dev.input_channels
-                }
-                self.ai_dev.save_log(hyperparameters, final_loss, self.ai_dev.random_seed)
-                self.send_telegram_message(f"Training complete. Final loss: {final_loss:.4f}")
-                self.ai_dev.plot_losses(epoch_losses)
-                self.send_telegram_image('training_loss_plot.png')
-
+                    return
+        else:
+            # If user does not want to use an on-the-fly dataloader, we assume they will proceed directly to training
+            dataset_type = self.request_user_input("Choose a dataset to use for training (mnist/cifar10/custom):")
+            while dataset_type not in ["mnist", "cifar10", "custom"]:
+                self.send_telegram_message("Invalid dataset choice. Please choose 'mnist', 'cifar10', or 'custom'.")
+                dataset_type = self.request_user_input("Choose a dataset to use for training (mnist/cifar10/custom):")
+            next_action = "train"
+    
+        if next_action == "train":
+            self.show_random_seed_logs()
+            seed_choice = self.request_user_input("Do you want to set a custom random seed? (yes/no)")
+            if seed_choice == "yes":
+                random_seed = int(self.request_user_input("Enter the random seed value:"))
+                self.ai_dev.set_random_seed(random_seed)
+            
+            self.get_hyperparameters(dataset_type)
+            self.ai_dev.modelinit(dataset_type, self.data_dir if dataset_type == "custom" else None)
+            self.send_telegram_message("Model training has started.")
+            epoch_losses = self.ai_dev.train()
+            final_loss = epoch_losses[-1]
+            hyperparameters = {
+                "learning_rate": self.ai_dev.learning_rate,
+                "batch_size": self.ai_dev.batch_size,
+                "num_epochs": self.ai_dev.num_epochs,
+                "hidden_size": self.ai_dev.hidden_size,
+                "image_size": self.ai_dev.image_size,
+                "input_channels": self.ai_dev.input_channels
+            }
+            self.ai_dev.save_log(hyperparameters, final_loss, self.ai_dev.random_seed)
+            self.send_telegram_message(f"Training complete. Final loss: {final_loss:.4f}")
+            self.ai_dev.plot_losses(epoch_losses)
+            self.send_telegram_image('training_loss_plot.png')
+    
+            use_github = self.request_user_input("Do you want to use GitHub? (yes/no)")
+            while use_github not in ["yes", "no"]:
+                self.send_telegram_message("Invalid choice. Please enter 'yes' or 'no'.")
                 use_github = self.request_user_input("Do you want to use GitHub? (yes/no)")
-                while use_github not in ["yes", "no"]:
+            if use_github == 'yes':
+                acceptable_files = self.check_file_sizes()
+                self.send_telegram_message(f"Files acceptable for GitHub push: {', '.join(acceptable_files)}")
+                push_decision = self.request_user_input("Do you want to push these files to GitHub? (yes/no)")
+                while push_decision not in ["yes", "no"]:
                     self.send_telegram_message("Invalid choice. Please enter 'yes' or 'no'.")
-                    use_github = self.request_user_input("Do you want to use GitHub? (yes/no)")
-                if use_github == 'yes':
-                    acceptable_files = self.check_file_sizes()
-                    self.send_telegram_message(f"Files acceptable for GitHub push: {', '.join(acceptable_files)}")
                     push_decision = self.request_user_input("Do you want to push these files to GitHub? (yes/no)")
-                    while push_decision not in ["yes", "no"]:
-                        self.send_telegram_message("Invalid choice. Please enter 'yes' or 'no'.")
-                        push_decision = self.request_user_input("Do you want to push these files to GitHub? (yes/no)")
-                    if push_decision == 'yes':
-                        repo_url = self.request_user_input("Enter your GitHub repository URL:")
-                        is_private = self.request_user_input("Is this a private repository? (yes/no)") == 'yes'
-                        self.push_to_github(repo_url, is_private)
+                if push_decision == 'yes':
+                    repo_url = self.request_user_input("Enter your GitHub repository URL:")
+                    is_private = self.request_user_input("Is this a private repository? (yes/no)") == 'yes'
+                    self.push_to_github(repo_url, is_private)
+    
+            while True:
+                command = self.request_user_input("Enter 'rerun' to train again with new parameters, or 'stop' to end the program, 'cuda' to get CUDA status and stop, or an image to test model:")
+                if isinstance(command, bytes):
+                    self.ai_dev.test(command)
+                else:
+                    if command not in ["rerun", "stop", "cuda"]:
+                        self.send_telegram_message("Invalid choice. Please enter 'rerun', 'stop', 'cuda', or send image.")
+                    if command == "stop":
+                        self.send_telegram_message("Training stopped by user command.")
+                        break
+                    elif command == "rerun":
+                        self.send_telegram_message("Rerunning the training with new parameters.")
+                        continue
+                    elif command == "cuda":
+                        self.get_cuda_options()
 
-                while True:
-                    command = self.request_user_input("Enter 'rerun' to train again with new parameters, or 'stop' to end the program, 'cuda' to get CUDA status and stop, or an image to test model:")
-                    if isinstance(command, bytes):
-                        self.ai_dev.test(command)
-                    else:               
-                        if command not in ["rerun", "stop", "cuda"]:
-                            self.send_telegram_message("Invalid choice. Please enter 'rerun', 'stop', 'cuda', or send image.")
-                        if command == "stop":
-                            self.send_telegram_message("Training stopped by user command.")
-                            break
-                        elif command == "rerun":
-                            self.send_telegram_message("Rerunning the training with new parameters.")
-                            continue
-                        elif command == "cuda":
-                            self.get_cuda_options()
-                        
