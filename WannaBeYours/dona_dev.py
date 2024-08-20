@@ -145,11 +145,13 @@ class DonaDev:
             label_choice = self.request_user_input("Does the label folder already exist? (yes/no)")
             if label_choice == "yes":
                 existing_labels = os.listdir(self.data_dir) 
-                self.send_telegram_message(f"Existing labels: {', '.join(existing_labels)}")
-                label = self.request_user_input("Enter the label folder name:")
-                if label not in existing_labels:
-                    self.send_telegram_message("Error: Label folder does not exist.")
-                    continue
+                while True:
+                    self.send_telegram_message(f"Existing labels: {', '.join(existing_labels)}")
+                    label = self.request_user_input("Enter the label folder name:")
+                    if label not in existing_labels:
+                        self.send_telegram_message("Error: Label folder does not exist.")
+                    else:
+                        break
             else:
                 label = self.request_user_input("Enter the new label folder name:")
                 os.makedirs(os.path.join(self.data_dir, label), exist_ok=True)
@@ -166,7 +168,7 @@ class DonaDev:
 
             next_action = self.request_user_input("Type 'stop' to finish collecting data, or 'continue' to add more images:")
             if next_action == "stop":
-                break
+                return
 
     def show_random_seed_logs(self):
         logs = self.ai_dev.show_logs()
