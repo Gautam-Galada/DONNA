@@ -145,11 +145,13 @@ class DonaDev:
             label_choice = self.request_user_input("Does the label folder already exist? (yes/no)")
             if label_choice == "yes":
                 existing_labels = os.listdir(self.data_dir) 
-                self.send_telegram_message(f"Existing labels: {', '.join(existing_labels)}")
-                label = self.request_user_input("Enter the label folder name:")
-                if label not in existing_labels:
-                    self.send_telegram_message("Error: Label folder does not exist.")
-                    continue
+                while True:
+                    self.send_telegram_message(f"Existing labels: {', '.join(existing_labels)}")
+                    label = self.request_user_input("Enter the label folder name:")
+                    if label not in existing_labels:
+                        self.send_telegram_message("Error: Label folder does not exist.")
+                    else:
+                        break
             else:
                 label = self.request_user_input("Enter the new label folder name:")
                 os.makedirs(os.path.join(self.data_dir, label), exist_ok=True)
@@ -166,7 +168,7 @@ class DonaDev:
 
             next_action = self.request_user_input("Type 'stop' to finish collecting data, or 'continue' to add more images:")
             if next_action == "stop":
-                break
+                return
 
     def show_random_seed_logs(self):
         logs = self.ai_dev.show_logs()
@@ -256,16 +258,19 @@ class DonaDev:
                         is_private = self.request_user_input("Is this a private repository? (yes/no)") == 'yes'
                         self.push_to_github(repo_url, is_private)
 
-                command = self.request_user_input("Enter 'rerun' to train again with new parameters, or 'stop' to end the program, 'cuda' to get CUDA status and stop, or an image to test model:")
-                while command not in ["rerun", "stop", "cuda"]:
-                    self.send_telegram_message("Invalid choice. Please enter 'rerun', 'stop', or 'cuda'.")
+                while True:
                     command = self.request_user_input("Enter 'rerun' to train again with new parameters, or 'stop' to end the program, 'cuda' to get CUDA status and stop, or an image to test model:")
-                if command == "stop":
-                    self.send_telegram_message("Training stopped by user command.")
-                    break
-                elif command == "rerun":
-                    self.send_telegram_message("Rerunning the training with new parameters.")
-                    continue
-                elif command == "cuda":
-                    self.get_cuda_options()
-                    break
+                    if isinstance(command, bytes):
+                        self.ai_dev.test(command)
+                    else:               
+                        if command not in ["rerun", "stop", "cuda"]:
+                            self.send_telegram_message("Invalid choice. Please enter 'rerun', 'stop', 'cuda', or send image.")
+                        if command == "stop":
+                            self.send_telegram_message("Training stopped by user command.")
+                            break
+                        elif command == "rerun":
+                            self.send_telegram_message("Rerunning the training with new parameters.")
+                            continue
+                        elif command == "cuda":
+                            self.get_cuda_options()
+                        
