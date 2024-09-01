@@ -1,6 +1,14 @@
 DonaDev Project Documentation
 =============================
 
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/4ca88502-4ff5-4578-ad4b-c394b24287ad" width="200" />
+  <img src="https://github.com/user-attachments/assets/c9b1df0b-802f-4b5b-93fa-838b05c4fd6e" width="200" />
+  <img src="https://github.com/user-attachments/assets/4daca6dd-f449-4670-b15f-a4d467a046f7" width="200" />
+  <img src="https://github.com/user-attachments/assets/f3ddfba4-3cab-4270-ae4c-11da9f8e8ebd" width="200" />
+</div>
+
+
 Introduction
 ------------
 DonaDev is a project that integrates a neural network training framework with Telegram, allowing users to control and interact with the training process through a Telegram bot. It supports common datasets like MNIST and CIFAR-10, as well as custom datasets provided by the user. It also provides on-fly data collector. 
