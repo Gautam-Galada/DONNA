@@ -1,8 +1,76 @@
-every ai dev needs a DONNA, to stepout once in a while and get some sunshine and caffeine.
+DonaDev Project Documentation
+=============================
 
-![image](https://github.com/user-attachments/assets/97e06283-abc8-4934-a118-21590f170c5c) ![image](https://github.com/user-attachments/assets/49eed0bd-9763-492e-b0fa-f378106bda4b)
+Introduction
+------------
+DonaDev is a project that integrates a neural network training framework with Telegram, allowing users to control and interact with the training process through a Telegram bot. It supports common datasets like MNIST and CIFAR-10, as well as custom datasets provided by the user.
 
-## Now with testing on the fly
-![image](https://github.com/user-attachments/assets/7e944a19-5a8f-4b4f-aa72-dcd76b43c03a) ![image](https://github.com/user-attachments/assets/d43e9de4-e6bf-411d-a497-326ca12bf55d)
+Features
+--------
+- Control the training process via a Telegram bot.
+- Set hyperparameters such as learning rate, batch size, and number of epochs.
+- Collect and label data directly through Telegram.
+- Train models on standard datasets or custom datasets.
+- Check CUDA status for GPU availability.
+- Log random seed values to ensure reproducibility.
+- Automatically push updates to GitHub.
 
+Installation
+------------
+1. Clone the repository:
+   
+```bash
+git clone https://github.com/yourusername/donadev.git cd donadev
+```
 
+2. Install the required dependencies
+   
+```bash
+pip install -r requirements.txt
+```
+
+How to Use Dona Bot
+-------------------
+1. **Set Up the Telegram Bot:**
+- Create a new Telegram bot by chatting with the BotFather on Telegram.
+- Obtain the bot token and your chat ID.
+
+2. **Run the DonaDev Main Script:**
+- Open the `main.py` file and replace `YOUR_TELEGRAM_BOT_TOKEN` and `YOUR_CHAT_ID` with your actual bot token and chat ID.
+- Run the script:
+  
+  ```
+  python main.py
+  ```
+
+3. **Interacting with the Bot:**
+- Start a conversation with your bot on Telegram.
+- Follow the instructions sent by the bot to:
+  - Set hyperparameters (learning rate, batch size, epochs, etc.).
+  - Train a model on a dataset (MNIST, CIFAR-10, or a custom dataset).
+  - Collect and label data for custom datasets.
+  - Check CUDA status to ensure GPU availability.
+  - Review random seed logs and training results.
+  - Push code updates to a GitHub repository.
+
+4. **Training a Model:**
+- The bot will ask if you want to input custom hyperparameters or use defaults.
+- Choose the dataset type (package-based like MNIST or CIFAR-10, or custom).
+- If using a custom dataset, you can upload images directly through Telegram.
+
+5. **GitHub Integration:**
+- The bot will ask if you want to push updates to a GitHub repository after training.
+- If yes, provide the repository URL and indicate whether it is a private repository.
+
+6. **Ending the Session:**
+- You can stop the training process at any time by sending the "stop" command.
+- You can rerun the training with different parameters by sending the "rerun" command.
+
+Dependencies
+------------
+The following Python packages are required to run DonaDev:
+- torch
+- torchvision
+- requests
+- matplotlib
+- Pillow
