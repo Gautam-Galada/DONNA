@@ -5,7 +5,7 @@ import subprocess
 from git import Repo
 
 class DonaDev:
-    def __init__(self,token,chat_id,ai_dev,data_dir, git_token):
+    def __init__(self,token,chat_id,ai_dev,data_dir, git_token=None):
         self.TOKEN=token
         self.chat_id=chat_id
         self.ai_dev=ai_dev
