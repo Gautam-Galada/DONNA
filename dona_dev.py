@@ -5,12 +5,13 @@ import subprocess
 from git import Repo
 
 class DonaDev:
-    def __init__(self,token,chat_id,ai_dev,data_dir):
+    def __init__(self,token,chat_id,ai_dev,data_dir, git_token):
         self.TOKEN=token
         self.chat_id=chat_id
         self.ai_dev=ai_dev
         self.data_dir=data_dir
         self.last_update_id=None
+        self.git_token=git_token
 
     def send_telegram_message(self,message):
         url=f"https://api.telegram.org/bot{self.TOKEN}/sendMessage?chat_id={self.chat_id}&text={message}"
@@ -167,6 +168,10 @@ class DonaDev:
                         f"Hyperparameters: {log['hyperparameters']}\n")
         self.send_telegram_message(message)
 
+    def process_repo_url(repo_url):
+        repo_url=repo_url.replace('github.com', self.git_token+'@github.com')
+        return repo_url
+
     def main_loop(self):
         self.clear_previous_messages()
         data_path_entered = self.request_user_input("Have you already entered the data path? (yes/no)")
@@ -206,6 +211,7 @@ class DonaDev:
                     push_decision = self.request_user_input("Do you want to push these files to GitHub? (yes/no)")
                 if push_decision == 'yes':
                     repo_url = self.request_user_input("Enter your GitHub repository URL:")
+                    repo_url=self.process_repo_url(repo_url)
                     is_private = self.request_user_input("Is this a private repository? (yes/no)") == 'yes'
                     self.push_to_github(repo_url, is_private)
 
