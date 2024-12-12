@@ -48,6 +48,7 @@ How to Use Dona Bot
 
 2. **Set Up the LLM Server:**
 - Requirements: Over 5GB of free RAM
+- CUDA support preferred (If you are on linux, and it is not working, it is https://youtu.be/iYWzMvlj2RQ)
 - It may be on the same machine, or on another machine in LAN, or in cloud
 - Install Ollama https://ollama.com/
 - Set environment variable OLLAMA_HOST to 0.0.0.0
