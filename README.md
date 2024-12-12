@@ -46,15 +46,26 @@ How to Use Dona Bot
 - Create a new Telegram bot by chatting with the BotFather on Telegram.
 - Obtain the bot token and your chat ID.
 
-2. **Run the DonaDev Main Script:**
+2. **Set Up the LLM Server:**
+- Requirements: Over 5GB of free RAM
+- It may be on the same machine, or on another machine in LAN, or in cloud
+- Install Ollama https://ollama.com/
+- Set environment variable OLLAMA_HOST to 0.0.0.0
+- Configure Llama3 with `ollama pull llama3`
+- Start Ollama with `ollama serve`
+- Ensure the firewall allows traffic to port 11434
+- Mention the IP address or hostname of this machine in `main.py`
+
+3. **Run the DonaDev Main Script:**
 - Open the `main.py` file and replace `YOUR_TELEGRAM_BOT_TOKEN` and `YOUR_CHAT_ID` with your actual bot token and chat ID.
+- Replace the Ollama host with the server. (Or localhost if its hosted on same machine.)
 - Run the script:
   
   ```
   python main.py
   ```
 
-3. **Interacting with the Bot:**
+4. **Interacting with the Bot:**
 - Start a conversation with your bot on Telegram.
 - Follow the instructions sent by the bot to:
   - Set hyperparameters (learning rate, batch size, epochs, etc.).
@@ -64,12 +75,12 @@ How to Use Dona Bot
   - Review random seed logs and training results.
   - Push code updates to a GitHub repository.
 
-4. **Training a Model:**
+5. **Training a Model:**
 - The bot will ask if you want to input custom hyperparameters or use defaults.
 - Choose the dataset type (package-based like MNIST or CIFAR-10, or custom).
 - If using a custom dataset, you can upload images directly through Telegram.
 
-5. **GitHub Integration:**
+6. **GitHub Integration: (Not implemented yet)** 
 - The bot will ask if you want to push updates to a GitHub repository after training.
 - If yes, provide the repository URL and indicate whether it is a private repository.
 
@@ -85,3 +96,4 @@ The following Python packages are required to run DonaDev:
 - requests
 - matplotlib
 - Pillow
+- ollama

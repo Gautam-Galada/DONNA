@@ -3,3 +3,4 @@ torchvision
 requests
 matplotlib
 Pillow
+ollama

@@ -4,14 +4,17 @@ import requests
 import subprocess
 from git import Repo
 
+import json
+
 class DonaDev:
-    def __init__(self,token,chat_id,ai_dev,data_dir, git_token=None):
+    def __init__(self,token,chat_id,ai_dev,data_dir, git_token=None, ollama_host='localhost', ollama_port=11434):
         self.TOKEN=token
         self.chat_id=chat_id
         self.ai_dev=ai_dev
         self.data_dir=data_dir
         self.last_update_id=None
         self.git_token=git_token
+        self.llm= OllamaOperation(ollama_host=ollama_host, ollama_port=ollama_port, userin=self.request_user_input_noprompt, userop=self.send_telegram_message)
 
     def send_telegram_message(self,message):
         url=f"https://api.telegram.org/bot{self.TOKEN}/sendMessage?chat_id={self.chat_id}&text={message}"
@@ -38,14 +41,22 @@ class DonaDev:
         print(f"Cleared previous messages. Last update ID: {self.last_update_id}")
 
     def get_cuda_options(self):
-        p=subprocess.run(['nvidia-smi','-q'],capture_output=True,text=True)
-        pret=p.returncode
-        if pret != 0:
+        try:
+            p=subprocess.run(['nvidia-smi','-q'],capture_output=True,text=True)
+            pret=p.returncode
+            if pret != 0:
+                print("Device doesn't have GPU or CUDA drivers error")
+                self.send_telegram_message("Device doesn't have GPU or CUDA drivers error")
+                return
+            pop=p.stdout
+            for popline in pop.splitlines():self.send_telegram_message(popline)
+        except:
             print("Device doesn't have GPU or CUDA drivers error")
             self.send_telegram_message("Device doesn't have GPU or CUDA drivers error")
-            return
-        pop=p.stdout
-        for popline in pop.splitlines():self.send_telegram_message(popline)
+        
+    def request_user_input_noprompt(self):
+        return self.request_user_input('')
+
 
     def request_user_input(self, prompt):
         self.send_telegram_message(prompt)
@@ -66,52 +77,43 @@ class DonaDev:
         self.send_telegram_message("No input received within 5 minutes. Using default value.")
         return None
 
-    def get_hyperparameters(self,dataset_choice):
-        if dataset_choice=='mnist':
-            default_lr=0.001
-            default_bs=64
-            default_epochs=2
-            default_hidden_size=512
-            default_image_size=(28,28)
-            default_input_channels =1
-        elif dataset_choice == 'cifar10':
-            default_lr=0.001
-            default_bs=64
-            default_epochs=2
-            default_hidden_size=512
-            default_image_size=(32,32)
-            default_input_channels=3
-        else:
-            default_lr=0.001
-            default_bs=64
-            default_epochs=2
-            default_hidden_size=512
-            default_image_size=(28,28)
-            default_input_channels=3
-
-        choice=self.request_user_input("Do you want to input hyperparameters? (yes/no)")
-        if choice=='yes':
-            learning_rate=float(self.request_user_input(f"Enter learning rate (e.g., {default_lr}):") or default_lr)
-            batch_size=int(self.request_user_input(f"Enter batch size (e.g., {default_bs}):") or default_bs)
-            num_epochs=int(self.request_user_input(f"Enter number of epochs (e.g., {default_epochs}):") or default_epochs)
-            hidden_size=int(self.request_user_input(f"Enter hidden layer size (e.g., {default_hidden_size}):") or default_hidden_size)
-            image_size=tuple(map(int, self.request_user_input(f"Enter image size (e.g., {default_image_size[0]}, {default_image_size[1]}):").split(',')) or default_image_size)
-            input_channels=int(self.request_user_input(f"Enter input channels (e.g., {default_input_channels}):") or default_input_channels)
-        else:
-            learning_rate =default_lr
-            batch_size =default_bs
-            num_epochs= default_epochs
-            hidden_size= default_hidden_size
-            image_size= default_image_size
-            input_channels= default_input_channels
-        self.ai_dev.learning_rate= learning_rate
-        self.ai_dev.batch_size= batch_size
-        self.ai_dev.num_epochs = num_epochs
-        self.ai_dev.hidden_size = hidden_size
-        self.ai_dev.image_size = image_size
-        self.ai_dev.input_channels = input_channels
-        self.send_telegram_message(f"Using hyperparameters: learning_rate={learning_rate}, batch_size={batch_size}, num_epochs={num_epochs}, hidden_size={hidden_size}, image_size={image_size}, input_channels={input_channels}")
-
+    def get_hyperparam(self):
+        datamnist={
+            "learning_rate": 0.01,
+            "batch_size": 64,
+            "num_epochs": 2,
+            "hidden_size": 512,
+            "image_size": {
+                "length": 28,
+                "width":  28
+            },
+            "input_channels": 1,
+        }
+        datacifr={
+            "learning_rate": 0.001,
+            "batch_size": 64,
+            "num_epochs": 2,
+            "hidden_size": 512,
+            "image_size": {
+                "length": 32,
+                "width":  32
+            },
+            "input_channels": 3,
+        }
+        datacustom={
+            "learning_rate": 0.001,
+            "batch_size": 64,
+            "num_epochs": 2,
+            "hidden_size": 512,
+            "image_size": {
+                "length": 28,
+                "width":  28
+            },
+            "input_channels": 3,
+        }
+        data={"mnist":datamnist, "cifr10":datacifr, "custom": datacustom}
+        return data
+        
     def check_file_sizes(self):
         max_file_size=100*1024*1024
         acceptable_files=[]
@@ -168,160 +170,225 @@ class DonaDev:
                         f"Hyperparameters: {log['hyperparameters']}\n")
         self.send_telegram_message(message)
 
-    def process_repo_url(repo_url):
+    def process_repo_url(self,repo_url):
         repo_url=repo_url.replace('github.com', self.git_token+'@github.com')
         return repo_url
 
-    def main_loop(self):
+
+    def main_loop1(self):
         self.clear_previous_messages()
-        data_path_entered = self.request_user_input("Have you already entered the data path? (yes/no)")
-        if data_path_entered == "stop":
-            self.send_telegram_message("Process stopped by user command.")
-            return
-        if data_path_entered == "yes":
-            dataset_type = "custom"
-            self.get_hyperparameters(dataset_type)
-            self.ai_dev.modelinit(dataset_type, self.data_dir)
-            self.send_telegram_message("Model training has started.")
-            epoch_losses = self.ai_dev.train()
-            final_loss = epoch_losses[-1]
-            hyperparameters = {
-                "learning_rate": self.ai_dev.learning_rate,
-                "batch_size": self.ai_dev.batch_size,
-                "num_epochs": self.ai_dev.num_epochs,
-                "hidden_size": self.ai_dev.hidden_size,
-                "image_size": self.ai_dev.image_size,
-                "input_channels": self.ai_dev.input_channels
-            }
-            self.ai_dev.save_log(hyperparameters, final_loss, self.ai_dev.random_seed)
-            self.send_telegram_message(f"Training complete. Final loss: {final_loss:.4f}")
-            self.ai_dev.plot_losses(epoch_losses)
-            self.send_telegram_image('training_loss_plot.png')
+        defaults=self.get_hyperparam()
+        inp=self.llm.ollama_runner()
+        config=json.loads(inp)
+        default_checker=['learning_rate', 'batch_size', 'num_epochs', 'hidden_size', 'input_channels']
+        dataset='custom'
+        if 'no' in config['data_path_entered']:
+            dataset=config['data_path_entered']['no']['dataset']
 
-            use_github = self.request_user_input("Do you want to use GitHub? (yes/no)")
-            while use_github not in ["yes", "no"]:
-                self.send_telegram_message("Invalid choice. Please enter 'yes' or 'no'.")
-                use_github = self.request_user_input("Do you want to use GitHub? (yes/no)")
-            if use_github == 'yes':
-                acceptable_files = self.check_file_sizes()
-                self.send_telegram_message(f"Files acceptable for GitHub push: {', '.join(acceptable_files)}")
-                push_decision = self.request_user_input("Do you want to push these files to GitHub? (yes/no)")
-                while push_decision not in ["yes", "no"]:
-                    self.send_telegram_message("Invalid choice. Please enter 'yes' or 'no'.")
-                    push_decision = self.request_user_input("Do you want to push these files to GitHub? (yes/no)")
-                if push_decision == 'yes':
-                    repo_url = self.request_user_input("Enter your GitHub repository URL:")
-                    repo_url=self.process_repo_url(repo_url)
-                    is_private = self.request_user_input("Is this a private repository? (yes/no)") == 'yes'
-                    self.push_to_github(repo_url, is_private)
+        for x in default_checker:
+            if config[x]=='default':
+                config[x]=defaults[dataset][x]
 
-            while True:
-                command = self.request_user_input("Enter 'rerun' to train again with new parameters, or 'stop' to end the program, 'cuda' to get CUDA status and stop, or an image to test model:")
-                if isinstance(command, bytes):
-                    self.ai_dev.test(command)
-                else:
-                    if command not in ["rerun", "stop", "cuda"]:self.send_telegram_message("Invalid choice. Please enter 'rerun', 'stop', 'cuda', or send image.")
-                    if command == "stop":
-                        self.send_telegram_message("Training stopped by user command.")
-                        break
-                    elif command == "rerun":
-                        self.send_telegram_message("Rerunning the training with new parameters.")
-                        continue
-                    elif command == "cuda":self.get_cuda_options()
+        default_checker2=['length', 'width']
+        for x in default_checker2:
+            if config['image_size'][x]=='default':
+                config['image_size'][x]=defaults[dataset]['image_size'][x]
+        print(config)
 
-        else:
-            use_onthefly_dataloader = self.request_user_input("Do you want to use an on-the-fly dataloader? (yes/no)")
-            
-            if use_onthefly_dataloader == "stop":
-                self.send_telegram_message("Process stopped by user command.")
-                return
-            if use_onthefly_dataloader == "yes":
-                dataset_choice = self.request_user_input("Do you want to use package-based data or custom data? (package/custom)")
-                if dataset_choice == "stop":
-                    self.send_telegram_message("Process stopped by user command.")
-                    return
-                while dataset_choice not in ["package", "custom"]:
-                    self.send_telegram_message("Invalid choice. Please enter 'package' or 'custom'.")
-                    dataset_choice = self.request_user_input("Do you want to use package-based data or custom data? (package/custom)")
-                    if dataset_choice == "stop":
-                        self.send_telegram_message("Process stopped by user command.")
-                        return
-                if dataset_choice == "package":
-                    dataset_type = self.request_user_input("Choose a dataset (mnist/cifar10):")
-                    while dataset_type not in ["mnist", "cifar10"]:
-                        self.send_telegram_message("Invalid dataset choice. Please choose 'mnist' or 'cifar10'.")
-                        dataset_type = self.request_user_input("Choose a dataset (mnist/cifar10):")
-                        if dataset_type == "stop":
-                            self.send_telegram_message("Process stopped by user command.")
-                            return
-                    next_action = "train"
-                else:
-                    dataset_type = "custom"
-                    self.collect_data()
-                    next_action = self.request_user_input("Data collection complete. Do you want to train or stop? (train/stop)")
-                    while next_action not in ["train", "stop"]:
-                        self.send_telegram_message("Invalid choice. Please enter 'train' or 'stop'.")
-                        next_action = self.request_user_input("Data collection complete. Do you want to train or stop? (train/stop)")
-                    if next_action == "stop":
-                        self.send_telegram_message("Process stopped by user command.")
-                        return
-            else:
-                dataset_type = self.request_user_input("Choose a dataset to use for training (mnist/cifar10/custom):")
-                while dataset_type not in ["mnist", "cifar10", "custom"]:
-                    self.send_telegram_message("Invalid dataset choice. Please choose 'mnist', 'cifar10', or 'custom'.")
-                    dataset_type = self.request_user_input("Choose a dataset to use for training (mnist/cifar10/custom):")
-                next_action = "train"
-            if next_action == "train":
-                self.show_random_seed_logs()
-                seed_choice = self.request_user_input("Do you want to set a custom random seed? (yes/no)")
-                if seed_choice == "yes":
-                    random_seed = int(self.request_user_input("Enter the random seed value:"))
-                    self.ai_dev.set_random_seed(random_seed)
-                self.get_hyperparameters(dataset_type)
-                self.ai_dev.modelinit(dataset_type, self.data_dir if dataset_type == "custom" else None)
-                self.send_telegram_message("Model training has started.")
-                epoch_losses = self.ai_dev.train()
-                final_loss = epoch_losses[-1]
-                hyperparameters = {
+        self.ai_dev.learning_rate=config['learning_rate']
+        self.ai_dev.batch_size=config['batch_size']
+        self.ai_dev.num_epochs=config['num_epochs']
+        self.ai_dev.hidden_size=config['hidden_size']
+        self.ai_dev.image_size=(config['image_size']['length'], config['image_size']['width'])
+        self.ai_dev.input_channels=config['input_channels']
+
+        if 'no' in config['data_path_entered'] and dataset=='custom':
+            self.collect_data()
+
+        dataset_type=dataset
+        
+        try:
+            if config['random_seed'] != 'default':
+                self.ai_dev.set_random_seed(config['random_seed'])
+        except:
+            pass
+
+        if config['view_cuda_details']=='yes':
+            self.get_cuda_options()
+
+        self.ai_dev.modelinit(dataset_type, self.data_dir if dataset_type == "custom" else None)
+
+        self.send_telegram_message("Model training has started.")
+        epoch_losses = self.ai_dev.train()
+        final_loss = epoch_losses[-1]
+        hyperparameters = {
                     "learning_rate": self.ai_dev.learning_rate,
                     "batch_size": self.ai_dev.batch_size,
                     "num_epochs": self.ai_dev.num_epochs,
                     "hidden_size": self.ai_dev.hidden_size,
                     "image_size": self.ai_dev.image_size,
                     "input_channels": self.ai_dev.input_channels
-                }
-                self.ai_dev.save_log(hyperparameters, final_loss, self.ai_dev.random_seed)
-                self.send_telegram_message(f"Training complete. Final loss: {final_loss:.4f}")
-                self.ai_dev.plot_losses(epoch_losses)
-                self.send_telegram_image('training_loss_plot.png')
+        }
+        self.ai_dev.save_log(hyperparameters, final_loss, self.ai_dev.random_seed)
+        self.send_telegram_message(f"Training complete. Final loss: {final_loss:.4f}")
+        self.ai_dev.plot_losses(epoch_losses)
+        self.send_telegram_image('training_loss_plot.png')
+        next=''
+        kk= True
+        while kk:
+            command = self.request_user_input("Enter 'rerun' to train again with new parameters, or 'stop' to end the program, or an image to test model:")
+            if isinstance(command, bytes):
+                self.send_telegram_message(self.ai_dev.test(command))
+            else:
+                if command not in ["rerun", "stop"]:
+                    self.send_telegram_message("Invalid choice. Please enter 'rerun', 'stop', or send image.")
+                if command == "stop":
+                        self.send_telegram_message("Training stopped by user command.")
+                        kk=False
+                        break
+                elif command == "rerun":
+                        self.send_telegram_message("Rerunning the training with new parameters.")
+                        next='rerun'
+                        kk=False
+                        break
 
-                use_github = self.request_user_input("Do you want to use GitHub? (yes/no)")
-                while use_github not in ["yes", "no"]:
-                    self.send_telegram_message("Invalid choice. Please enter 'yes' or 'no'.")
-                    use_github = self.request_user_input("Do you want to use GitHub? (yes/no)")
-                if use_github == 'yes':
-                    acceptable_files = self.check_file_sizes()
-                    self.send_telegram_message(f"Files acceptable for GitHub push: {', '.join(acceptable_files)}")
-                    push_decision = self.request_user_input("Do you want to push these files to GitHub? (yes/no)")
-                    while push_decision not in ["yes", "no"]:
-                        self.send_telegram_message("Invalid choice. Please enter 'yes' or 'no'.")
-                        push_decision = self.request_user_input("Do you want to push these files to GitHub? (yes/no)")
-                    if push_decision == 'yes':
-                        repo_url = self.request_user_input("Enter your GitHub repository URL:")
-                        is_private = self.request_user_input("Is this a private repository? (yes/no)") == 'yes'
-                        self.push_to_github(repo_url, is_private)
-                while True:
-                    command = self.request_user_input("Enter 'rerun' to train again with new parameters, or 'stop' to end the program, 'cuda' to get CUDA status and stop, or an image to test model:")
-                    if isinstance(command, bytes):
-                        self.ai_dev.test(command)
-                    else:
-                        if command not in ["rerun", "stop", "cuda"]:
-                            self.send_telegram_message("Invalid choice. Please enter 'rerun', 'stop', 'cuda', or send image.")
-                        if command == "stop":
-                            self.send_telegram_message("Training stopped by user command.")
-                            break
-                        elif command == "rerun":
-                            self.send_telegram_message("Rerunning the training with new parameters.")
-                            continue
-                        elif command == "cuda":
-                            self.get_cuda_options()
+        if next=='rerun':
+            self.main_loop1()
+                        
+from ollama import *
+
+class OllamaOperation:
+	def __init__(self, ollama_host='localhost', ollama_port=11434, userin=input, userop=print):
+		self.ollama=Client(host=ollama_host+':'+str(ollama_port))
+		self.chat=self.ollama.chat
+		self.userin=userin
+		self.userop=userop
+		self.initprompt='''
+You are an assistant called DONNA. You need to interact with the user to get information to fill the below JSON. Each key in the JSON will have an unique value which is not a list. In the given JSON the lists show the possible choices. You dont have to input the key jsoncomplete, just have it in the output. The word 'jsonbegin' should prefix the json and 'jsonend' should be after it.
+
+"value" is not a possible choice. "value" should be replaced by a numeric value from the user. When you have received all the information to fill the JSON, Output the JSON without any other text or explanation.
+
+{
+    "data_path_entered": [
+        "yes",
+        {
+            "no": {
+                "dataset": [
+                    "mnist",
+                    "cifr10",
+                    "custom"
+                ]
+            }
+        }
+    ],
+    "learning_rate": [
+        "value",
+        "default"
+    ],
+    "batch_size": [
+        "value",
+        "default"
+    ],
+    "num_epochs": [
+        "value",
+        "default"
+    ],
+    "hidden_size": [
+        "value",
+        "default"
+    ],
+    "image_size": {
+        "length": [
+            "value",
+            "default"
+        ],
+        "width": [
+            "value",
+            "default"
+        ]
+    },
+    "input_channels": [
+        "value",
+        "default"
+    ],
+    "random_seed": [
+        "value",
+        "default"
+    ],
+    "view_cuda_details": [
+        "yes",
+        "no"
+    ],
+    "jsoncomplete": "jsonyes"
+}
+
+For example, a filled JSON would be of the form
+jsonbegin
+{
+    "data_path_entered":{
+        "no": {
+            "dataset": "mnist"
+        }
+    },
+    "learning_rate": "default",
+    "batch_size": "default",
+    "num_epochs": 10,
+    "hidden_size": "default",
+    "image_size": {
+        "length": 32,
+        "width":  32
+    },
+    "input_channels": "default",
+    "random_seed": 15,
+    "view_cuda_details": "no",
+    "jsoncomplete": "jsonyes"
+}
+jsonend
+
+Remember, your last message should be only the filled json without any other text or exaplanation or message.
+	'''
+
+	def get_ollama(self, messages, userop=print):
+		res=''
+		for part in self.chat('llama3', messages=messages, stream=True):
+			x=part['message']['content']
+			print(x, end='', flush=True)
+			res=res+x
+		print()
+		msg={}
+		msg['role']='assistant'
+		msg['content']=res
+		if 'jsoncomplete' in msg['content'] and 'jsonyes' in msg['content']:
+			pass
+		else:
+			userop(res)
+		return msg
+	
+	def get_user(self, userin=input):
+		inp=userin()
+		print(inp)
+		msg={}
+		msg['role']='user'
+		msg['content']=inp
+		return msg
+	
+	def ollama_runner(self):
+		messages=[]
+		msg={}
+		msg['role']='user'
+		msg['content']=self.initprompt
+
+		messages.append(msg)
+		while True:
+			ollamaresp=self.get_ollama(messages, self.userop)
+			if 'jsoncomplete' in ollamaresp['content'] and 'jsonyes' in ollamaresp['content']:
+				cont=ollamaresp['content']
+				a=cont.find('jsonbegin')+len('jsonbegin')
+				b=cont.find('jsonend')
+				print("Complete")
+				return cont[a:b]
+			messages.append(ollamaresp)
+			userresp=self.get_user(self.userin)
+			messages.append(userresp)
+		
+
