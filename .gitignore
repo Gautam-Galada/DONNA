@@ -1,0 +1,4 @@
+__pycache__/
+data/
+training_logs.json
+training_loss_plot.png

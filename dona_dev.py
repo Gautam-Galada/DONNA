@@ -7,7 +7,7 @@ from git import Repo
 import json
 
 class DonaDev:
-    def __init__(self,token,chat_id,ai_dev,data_dir, git_token=None, ollama_host='localhost', ollama_port=11434):
+    def __init__(self,token,chat_id,ai_dev,data_dir, git_token=None, ollama_host='localhost', ollama_port=11434, custom_commands={}):
         self.TOKEN=token
         self.chat_id=chat_id
         self.ai_dev=ai_dev
@@ -15,6 +15,16 @@ class DonaDev:
         self.last_update_id=None
         self.git_token=git_token
         self.llm= OllamaOperation(ollama_host=ollama_host, ollama_port=ollama_port, userin=self.request_user_input_noprompt, userop=self.send_telegram_message)
+        self.commands={}
+        for x in custom_commands.keys():
+             self.commands[x.lower()]=custom_commands[x]
+
+    def get_commands_list_text(self):
+        ret=''
+        for x in self.commands.keys():
+             ret=ret+x+' ,'
+        ret=ret[:-1]
+        return ret
 
     def send_telegram_message(self,message):
         url=f"https://api.telegram.org/bot{self.TOKEN}/sendMessage?chat_id={self.chat_id}&text={message}"
@@ -173,6 +183,14 @@ class DonaDev:
     def process_repo_url(self,repo_url):
         repo_url=repo_url.replace('github.com', self.git_token+'@github.com')
         return repo_url
+    
+    def run_command(self, command):
+        try:
+            p = subprocess.run(command, capture_output=True, text=True)
+            self.send_telegram_message(p.stdout)
+            self.send_telegram_message(p.stderr)
+        except:
+            self.send_telegram_message('Some error has occurred')
 
 
     def main_loop1(self):
@@ -236,12 +254,12 @@ class DonaDev:
         next=''
         kk= True
         while kk:
-            command = self.request_user_input("Enter 'rerun' to train again with new parameters, or 'stop' to end the program, or an image to test model:")
+            command = self.request_user_input("Enter 'rerun' to train again with new parameters, or 'stop' to end the program, or an image to test model, or run a custom command: "+self.get_commands_list_text()+", or start writing custom command with shell:")
             if isinstance(command, bytes):
                 self.send_telegram_message(self.ai_dev.test(command))
             else:
-                if command not in ["rerun", "stop"]:
-                    self.send_telegram_message("Invalid choice. Please enter 'rerun', 'stop', or send image.")
+                if command not in ["rerun", "stop"] and command not in self.commands and not command.startswith('shell:'):
+                    self.send_telegram_message("Invalid choice. Please enter 'rerun', 'stop', or send image, or a command from "+self.get_commands_list_text()+", or start writing custom command with shell:")
                 if command == "stop":
                         self.send_telegram_message("Training stopped by user command.")
                         kk=False
@@ -251,6 +269,12 @@ class DonaDev:
                         next='rerun'
                         kk=False
                         break
+                elif command in self.commands:
+                        cmd=self.commands[command]
+                        self.run_command(cmd)
+                elif command.startswith('shell:'):
+                        self.run_command(command[6:])
+                
 
         if next=='rerun':
             self.main_loop1()
