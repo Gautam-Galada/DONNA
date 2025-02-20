@@ -76,12 +76,4 @@ This paper presents Donna, an LLM-based agent that streamlines end-to-end machin
 
 Our approach demonstrates that advanced LLMs can offer more than just text generation—they can orchestrate intricate pipelines, balance resource usage, and integrate seamlessly with user interfaces, driving efficiencies across research labs, startups, and enterprise AI teams alike.
 
-## 7. Future Work
-While Donna showcases a strong proof of concept, several avenues remain open for exploration:
-
-Enhanced Security & Privacy: Strengthening data governance protocols and ensuring encryption at rest and in transit.
-Multi-LLM Coordination: Investigating how multiple LLM agents might collaborate on separate but interlinked tasks (data cleaning, augmentation, hyperparameter tuning).
-User Experience (UX) Research: Studying user interactions to refine the agent’s prompt-engineering strategies and reduce friction.
-Adaptive Scheduling & Resource Allocation: Exploring advanced scheduling algorithms that dynamically allocate compute resources based on real-time model performance metrics.
-Question 5: If you have specific future directions or enhancements planned (e.g., integrating self-healing pipelines, or bridging to other chat apps), please let me know so I can incorporate them here.
 
