@@ -4,7 +4,7 @@
 -  Agents {steps : Actions} -> interact with env
 
 # Taking Actions 
-*) JSON Agent | Code Agent | Function Calling Agents (JSON Type agent)
+JSON Agent | Code Agent | Function Calling Agents (JSON Type agent)
 - Agents crucial ability : Knows when to stop
 
 # The Stop and Parse Approach 
@@ -12,7 +12,7 @@
 2) Halting Further Generation
 3) Parsing the Output
 
-**JSON Agent / Function Calling Agents**
+**JSON Agent / Function Calling Agents**\
 Thought: {Intention underlying the users command} -> I need to check the number of layers freezed in Bert model.
 {
   "action": "get_bertconfig",
