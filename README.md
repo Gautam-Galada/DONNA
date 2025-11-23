@@ -1,13 +1,24 @@
-DonaDev Project Documentation
-=============================
+# DonaDev 2.0 – Project Documentation
+
+A Lightweight Telegram-Controlled ML Training & Experiment Tracking System
 
 ![image](https://github.com/user-attachments/assets/96119324-f3dd-4cf2-9194-68454e60302c)
 
+---
 
+## 📌 Introduction
 
-Introduction
-------------
-DonaDev is a project that integrates a neural network training framework with Telegram, allowing users to control and interact with the training process through a Telegram bot. It supports common datasets like MNIST and CIFAR-10, as well as custom datasets provided by the user. It also provides on-fly data collector. 
+**DonaDev 2.0** is a next-generation upgrade to the original Donna training bot.
+It combines:
+
+* A **Telegram Bot Interface**
+* An **LLM-driven configuration system** powered by **Ollama (Llama 3)**
+* A **lightweight training engine** (MNIST, CIFAR-10, and Custom Datasets)
+* A **SQLite-backed experiment tracker** with dataset IDs, seed IDs, metrics, and artifacts
+* Automatic plot generation, logging, and model testing
+* A **zero-UI ML training experience** fully inside Telegram
+
+DonaDev 2.0 allows any user—even beginners—to configure training, collect data, train models, test predictions, and log experiments **entirely from Telegram**, without writing a single line of code.
 
 <div align="center">
   <img src="https://github.com/user-attachments/assets/4ca88502-4ff5-4578-ad4b-c394b24287ad" width="200" />
@@ -16,85 +27,307 @@ DonaDev is a project that integrates a neural network training framework with Te
   <img src="https://github.com/user-attachments/assets/f3ddfba4-3cab-4270-ae4c-11da9f8e8ebd" width="200" />
 </div>
 
-Features
---------
-- Control the training process via a Telegram bot.
-- Set hyperparameters such as learning rate, batch size, and number of epochs.
-- Collect and label data directly through Telegram.
-- Train models on standard datasets or custom datasets.
-- Check CUDA status for GPU availability.
-- Log random seed values to ensure reproducibility.
-- Automatically push updates to GitHub.
+---
 
-Installation
-------------
-1. Clone the repository:
-   
-```bash
-git clone https://github.com/yourusername/donadev.git 
+## 🚀 What’s New in Version 2?
+
+DonnaDev 2.0 introduces a redesigned architecture with:
+
+### **1. SQLite-based Lightweight Experiment Tracking**
+
+* `runs` table uses:
+
+  * `dataset_id` instead of raw dataset names
+  * `seed_id` instead of raw seed values
+* Per-run configs stored cleanly
+* Artifacts (plots/checkpoints) recorded in DB
+* Seeds and datasets normalized to avoid duplication
+
+### **2. LLM-Driven Hyperparameter Collection**
+
+Ollama (Llama-3) dynamically interacts with the user to generate a **complete JSON config**, including:
+
+* learning_rate
+* batch_size
+* num_epochs
+* hidden_size
+* image_size (length/width)
+* input_channels
+* random_seed
+* dataset selection (MNIST, CIFAR-10, custom)
+
+### **3. Custom Dataset Collection Inside Telegram**
+
+Upload labeled images directly through Telegram → bot stores them → uses them for training.
+
+### **4. Improved Modularity**
+
+* `run_store.py`: experiment tracking
+* `dona_dev.py`: Telegram + instruction flow
+* `ai_dev.py`: ML implementation
+* `main.py`: launch point
+
+### **5. Plots & Artifacts Logging**
+
+After training, Donna automatically:
+
+* Generates training loss plot
+* Sends plot to Telegram
+* Logs plot in SQLite as an artifact
+
+---
+
+# ✨ Features (V2)
+
+### ✔️ Control AI training entirely through Telegram
+
+### ✔️ LLM-powered configuration (Llama 3 via Ollama)
+
+### ✔️ Lightweight MNIST / CIFAR-10 / custom dataset trainer
+
+### ✔️ On-device / remote / cloud Ollama inference
+
+### ✔️ Real-time custom dataset collection from Telegram
+
+### ✔️ SQLite Experiment Tracker (RunStore)
+
+* runs
+* datasets
+* seeds
+* metrics
+* artifacts
+
+### ✔️ Plot generation & Telegram image sending
+
+### ✔️ Auto GitHub integration (optional)
+
+### ✔️ Seed tracking for reproducibility
+
+### ✔️ GPU check (CUDA/nvidia-smi)
+
+---
+
+# 📁 Project Structure (V2)
+
+```
+DONNA-main/
+│
+├── dona_dev.py         # Orchestrator: Telegram + Ollama + training logic
+├── ai_dev.py           # Model code, datasets, training & plotting
+├── run_store.py        # NEW: SQLite experiment tracking
+├── main.py             # Start the DonnaDev bot
+├── __init__.py
+│
+├── runs/               # All run logs + artifacts
+│   ├── donna2.db       # SQLite database
+│   ├── checkpoints/    # model weights
+│   └── plots/          # training plots
+│
+└── requirements.txt
 ```
 
-2. Install the required dependencies
-   
+---
+
+# 🔧 Installation
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/yourusername/donadev.git
+cd donadev
+```
+
+### 2. Install Dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
-How to Use Dona Bot
--------------------
-1. **Set Up the Telegram Bot:**
-- Create a new Telegram bot by chatting with the BotFather on Telegram.
-- Obtain the bot token and your chat ID.
+DonnaDev 2.0 requires:
 
-2. **Set Up the LLM Server:**
-- Requirements: Over 5GB of free RAM
-- CUDA support preferred (If you are on linux, and it is not working, it is https://youtu.be/iYWzMvlj2RQ)
-- It may be on the same machine, or on another machine in LAN, or in cloud
-- Install Ollama https://ollama.com/
-- Set environment variable OLLAMA_HOST to 0.0.0.0
-- Configure Llama3 with `ollama pull llama3`
-- Start Ollama with `ollama serve`
-- Ensure the firewall allows traffic to port 11434
-- Mention the IP address or hostname of this machine in `main.py`
+* `torch`
+* `torchvision`
+* `matplotlib`
+* `Pillow`
+* `requests`
+* `gitpython`
+* `ollama`
+* `sqlite3` (built-in)
 
-3. **Run the DonaDev Main Script:**
-- Open the `main.py` file and replace `YOUR_TELEGRAM_BOT_TOKEN` and `YOUR_CHAT_ID` with your actual bot token and chat ID.
-- Replace the Ollama host with the server. (Or localhost if its hosted on same machine.)
-- Run the script:
-  
-  ```
-  python main.py
-  ```
+---
 
-4. **Interacting with the Bot:**
-- Start a conversation with your bot on Telegram.
-- Follow the instructions sent by the bot to:
-  - Set hyperparameters (learning rate, batch size, epochs, etc.).
-  - Train a model on a dataset (MNIST, CIFAR-10, or a custom dataset).
-  - Collect and label data for custom datasets.
-  - Check CUDA status to ensure GPU availability.
-  - Review random seed logs and training results.
-  - Push code updates to a GitHub repository.
+# 🤖 Setting Up Your Telegram Bot
 
-5. **Training a Model:**
-- The bot will ask if you want to input custom hyperparameters or use defaults.
-- Choose the dataset type (package-based like MNIST or CIFAR-10, or custom).
-- If using a custom dataset, you can upload images directly through Telegram.
+1. Open **BotFather** → create bot → get bot token
+2. Get your **chat ID**
+3. Update `main.py`:
 
-6. **GitHub Integration: (Not implemented yet)** 
-- The bot will ask if you want to push updates to a GitHub repository after training.
-- If yes, provide the repository URL and indicate whether it is a private repository.
+```python
+token = "YOUR_TELEGRAM_BOT_TOKEN"
+chat_id = "YOUR_CHAT_ID"
+data_dir = "data"       # folder for datasets
+```
 
-6. **Ending the Session:**
-- You can stop the training process at any time by sending the "stop" command.
-- You can rerun the training with different parameters by sending the "rerun" command.
+---
 
-Dependencies
-------------
-The following Python packages are required to run DonaDev:
-- torch
-- torchvision
-- requests
-- matplotlib
-- Pillow
-- ollama
+# 🧠 Setting Up the LLM Server (Ollama)
+
+1. Install Ollama → [https://ollama.com](https://ollama.com)
+2. Pull the Llama-3 model:
+
+```bash
+ollama pull llama3
+```
+
+3. Start server:
+
+```bash
+OLLAMA_HOST=0.0.0.0 ollama serve
+```
+
+4. Ensure port **11434** is open
+5. In `main.py`, edit:
+
+```python
+ollama_host = "your-ollama-ip"
+ollama_port = 11434
+```
+
+---
+
+# ▶️ Running DonnaDev
+
+```bash
+python main.py
+```
+
+---
+
+# 💬 Using the Bot
+
+Once started, open Telegram and chat with your bot.
+
+DonnaDev will:
+
+* Ask configuration questions through LLM dialog
+* Generate JSON configuration automatically
+* Train the model
+* Send training loss plots
+* Accept new commands:
+
+  * **send image → model predicts**
+  * **rerun → new config**
+  * **stop → end session**
+  * **shell:<cmd> → run a system command**
+  * **custom commands → defined in main.py**
+
+---
+
+# 🧪 Training a Model
+
+### 1. Choose dataset
+
+* MNIST
+* CIFAR-10
+* Custom (upload images)
+
+### 2. LLM collects parameters
+
+Example:
+
+```
+learning_rate: 0.001
+batch_size: 64
+num_epochs: 5
+image_size: 28×28
+random_seed: 42
+```
+
+### 3. DonnaDev trains & logs internally
+
+* SQLite entry created with:
+
+  * dataset_id
+  * seed_id
+  * hyperparameters
+  * run_id
+  * timestamps
+* Training loss plotted
+* Result sent to Telegram
+* Plot saved as an artifact
+
+---
+
+# 🗄️ Experiment Tracking (V2)
+
+`run_store.py` manages everything:
+
+### **Tables**
+
+* `datasets`
+* `seeds`
+* `runs`
+* `metrics`
+* `artifacts`
+
+### **Logged automatically**
+
+* Training hyperparameters
+* Dataset information
+* Random seed
+* Epoch-by-epoch metrics (optional future extension)
+* Loss plot artifact
+
+---
+
+# 🌐 GitHub Integration (Optional)
+
+DonnaDev can:
+
+* Commit all files
+* Push to any repository
+
+(Enable in settings; requires GitHub PAT)
+
+---
+
+# 🛑 Ending a Session
+
+* Send **"stop"**
+* Or send **"rerun"** to start a new configuration
+* Or send an image to test prediction
+
+---
+
+# 📦 Dependencies
+
+```
+torch
+torchvision
+requests
+matplotlib
+Pillow
+ollama
+gitpython
+```
+
+---
+
+# 🟢 Status of Version 2
+
+✔️ New architecture implemented
+✔️ SQLite experiment tracking (dataset_id + seed_id)
+✔️ LLM-driven config system works
+✔️ Telegram control loop completed
+✔️ Artifact logging (plots)
+✔️ Custom dataset collector integrated
+✔️ Training pipeline stable
+
+🔄 Coming in a future update:
+
+* Per-epoch metrics logging
+* Accuracy/best_val_acc
+* Formal command router (/new, /train, /status)
+* Better artifact folder structure
+* Model zoo extensions
+
